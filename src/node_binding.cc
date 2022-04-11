@@ -88,8 +88,8 @@
   V(uv)                                                                        \
   V(v8)                                                                        \
   V(wasi)                                                                      \
-  V(worker)                                                                    \
   V(watchdog)                                                                  \
+  V(worker)                                                                    \
   V(zlib)
 
 #define NODE_BUILTIN_MODULES(V)                                                \
