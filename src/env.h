@@ -180,6 +180,8 @@ constexpr size_t kFsStatsBufferLength =
 // Strings are per-isolate primitives but Environment proxies them
 // for the sake of convenience.  Strings should be ASCII-only.
 #define PER_ISOLATE_STRING_PROPERTIES(V)                                       \
+  V(sourcecode_string, "sourcecode")                                           \
+  V(bytecode_string, "bytecode")                                               \
   V(ack_string, "ack")                                                         \
   V(address_string, "address")                                                 \
   V(aliases_string, "aliases")                                                 \

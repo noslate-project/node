@@ -328,6 +328,10 @@ test-cov: all
 	$(MAKE) cctest
 	CI_SKIP_TESTS=$(COV_SKIP_TESTS) $(MAKE) jstest
 
+.PHONY: test-pgo-js
+test-pgo-js: all
+	ENABLE_NODE_LOG=YES $(PYTHON) tools/test.py --mode=release --flaky-tests=dontcare -J pgo
+
 .PHONY: test-parallel
 test-parallel: all
 	$(PYTHON) tools/test.py $(PARALLEL_ARGS) --mode=$(BUILDTYPE_LOWER) parallel

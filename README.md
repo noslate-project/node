@@ -775,3 +775,10 @@ license text.
 [Strategic initiatives]: doc/contributing/strategic-initiatives.md
 [Technical values and prioritization]: doc/contributing/technical-values.md
 [Working Groups]: https://github.com/nodejs/TSC/blob/HEAD/WORKING_GROUPS.md
+
+
+## AIWWR-Node
+
+AIWWR-Node is developed by Alibaba and based on the Node.js project.
+All changes licensed under the MIT License.
+See the NOTICE file for more information.
