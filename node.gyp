@@ -461,7 +461,10 @@
       'include_dirs': [
         'src',
         'deps/postject',
-        '<(SHARED_INTERMEDIATE_DIR)' # for node_natives.h
+        '<(SHARED_INTERMEDIATE_DIR)', # for node_natives.h
+        'deps/strontium/include',
+        'deps/metacache',
+        'deps/cwalk/include'
       ],
       'dependencies': [
         'deps/base64/base64.gyp:base64',
@@ -694,6 +697,10 @@
         '<@(deps_files)',
         # node.gyp is added by default, common.gypi is added for change detection
         'common.gypi',
+        "deps/strontium/src/util/log.cc",
+        "deps/strontium/src/pgo/metacache-impl.cc",
+        "deps/strontium/src/pgo/require-cache.cc",
+        'deps/cwalk/src/cwalk.c'
       ],
 
       'variables': {
