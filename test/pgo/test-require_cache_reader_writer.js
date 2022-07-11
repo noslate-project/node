@@ -8,7 +8,7 @@ const assert = require('assert');
 const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { RequireCacheReader, RequireCacheWriter } = require('strontium/relational_require_cache');
+const { RequireCacheReader, RequireCacheWriter } = require('alinode/relational_require_cache');
 const vm = require('vm');
 
 if (process.argv[2] === 'writer') {
