@@ -116,7 +116,7 @@
       'defines': [ 'NODE_NO_BROWSER_GLOBALS' ],
     } ],
     [ 'node_shared_zlib=="false"', {
-      'dependencies': [ 'deps/zlib/zlib.gyp:zlib' ],
+      'dependencies': [ '<(zlib_root)/zlib.gyp:zlib' ],
       'conditions': [
         [ 'force_load=="true"', {
           'xcode_settings': {
@@ -135,7 +135,7 @@
             ['OS!="aix" and node_shared=="false"', {
               'ldflags': [
                 '-Wl,--whole-archive',
-                '<(obj_dir)/deps/zlib/<(STATIC_LIB_PREFIX)zlib<(STATIC_LIB_SUFFIX)',
+                '<(obj_dir)/<(zlib_root)/<(STATIC_LIB_PREFIX)zlib<(STATIC_LIB_SUFFIX)',
                 '-Wl,--no-whole-archive',
               ],
             }],

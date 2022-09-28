@@ -353,6 +353,18 @@ shared_optgroup.add_argument('--shared-openssl-libpath',
     dest='shared_openssl_libpath',
     help='a directory to search for the shared OpenSSL DLLs')
 
+shared_optgroup.add_argument('--cloudflare-zlib',
+    action='store_true',
+    dest='use_cl_zlib',
+    default=None,
+    help='use cloudflare/zlib')
+
+shared_optgroup.add_argument('--no-cloudflare-zlib',
+    action='store_false',
+    dest='use_cl_zlib',
+    default=None,
+    help='do not use use cloudflare/zlib')
+
 shared_optgroup.add_argument('--shared-zlib',
     action='store_true',
     dest='shared_zlib',
@@ -1419,6 +1431,13 @@ def configure_library(lib, output, pkgname=None):
     elif pkg_libs:
       output['libraries'] += pkg_libs.split()
 
+def configure_zlib(o):
+  configure_library('zlib', o)
+  if (options.use_cl_zlib is None and o['variables']['target_arch'] == 'arm64'
+      or options.use_cl_zlib):
+    o['variables']['zlib_root'] = 'deps/cl-zlib'
+  else:
+    o['variables']['zlib_root'] = 'deps/zlib'
 
 def configure_v8(o):
   o['variables']['v8_enable_webassembly'] = 1
@@ -1947,7 +1966,7 @@ flavor = GetFlavor(flavor_params)
 configure_node(output)
 configure_node_lib_files(output)
 configure_napi(output)
-configure_library('zlib', output)
+configure_zlib(output)
 configure_library('http_parser', output)
 configure_library('libuv', output)
 configure_library('brotli', output, pkgname=['libbrotlidec', 'libbrotlienc'])
