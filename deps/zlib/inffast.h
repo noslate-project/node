@@ -20,7 +20,7 @@
    we can safely call inflate_fast() with only one up-front bounds check. One
    length/distance code pair can output up to 258 bytes, which is the maximum
    length that can be coded.
- */
+*/
 #define INFLATE_FAST_MIN_OUTPUT 258
 
 void ZLIB_INTERNAL inflate_fast OF((z_streamp strm, unsigned start));

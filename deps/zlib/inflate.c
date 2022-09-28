@@ -1,5 +1,5 @@
 /* inflate.c -- zlib decompression
- * Copyright (C) 1995-2016 Mark Adler
+ * Copyright (C) 1995-2012 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -83,7 +83,13 @@
 #include "zutil.h"
 #include "inftrees.h"
 #include "inflate.h"
+
+#if defined(INFLATE_CHUNK_SIMD_NEON) || defined(INFLATE_CHUNK_SIMD_SSE2)
+#include "inffast_chunk.h"
+#include "chunkcopy.h"
+#else
 #include "inffast.h"
+#endif
 
 #ifdef MAKEFIXED
 #  ifndef BUILDFIXED
@@ -228,7 +234,6 @@ int stream_size;
     state->strm = strm;
     state->window = Z_NULL;
     state->mode = HEAD;     /* to pass state test in inflateReset2() */
-    state->check = 1L;      /* 1L is the result of adler32() zero length data */
     ret = inflateReset2(strm, windowBits);
     if (ret != Z_OK) {
         ZFREE(strm, state);
@@ -259,10 +264,10 @@ int value;
         state->bits = 0;
         return Z_OK;
     }
-    if (bits > 16 || state->bits + (uInt)bits > 32) return Z_STREAM_ERROR;
+    if (bits > 16 || state->bits + bits > 32) return Z_STREAM_ERROR;
     value &= (1L << bits) - 1;
-    state->hold += (unsigned)value << state->bits;
-    state->bits += (uInt)bits;
+    state->hold += value << state->bits;
+    state->bits += bits;
     return Z_OK;
 }
 
@@ -406,10 +411,27 @@ unsigned copy;
 
     /* if it hasn't been done already, allocate space for the window */
     if (state->window == Z_NULL) {
+#if defined(INFLATE_CHUNK_SIMD_NEON) || defined(INFLATE_CHUNK_SIMD_SSE2)
+	unsigned wsize = 1U << state->wbits;
+	state->window = (unsigned char FAR *)
+			ZALLOC(strm, wsize + CHUNKCOPY_CHUNK_SIZE,
+				sizeof(unsigned char));
+	if (state->window == Z_NULL) return 1;
+	#ifdef INFLATE_CLEAR_UNUSED_UNDEFINED
+	/* Copies from the overflow portion of this buffer are undefined and
+	   may cause analysis tools to raise a wraning if we don't initialize
+	   it. However, this undefined data overwrites other undefined data
+	   and is subsequently either overwritten or left deliberately
+	   undefined at the end of decode; so there's really no point.
+	*/
+	zmemzero(state->window + wsize, CHUNKCOPY_CHUNK_SIZE);
+	#endif
+#else
         state->window = (unsigned char FAR *)
                         ZALLOC(strm, 1U << state->wbits,
                                sizeof(unsigned char));
         if (state->window == Z_NULL) return 1;
+#endif /* INFLATE_CHUNK_SIMD */
     }
 
     /* if window not in use yet, initialize */
@@ -760,8 +782,9 @@ int flush;
                 if (copy > have) copy = have;
                 if (copy) {
                     if (state->head != Z_NULL &&
-                        state->head->extra != Z_NULL) {
-                        len = state->head->extra_len - state->length;
+                        state->head->extra != Z_NULL &&
+                        (len = state->head->extra_len - state->length) <
+                            state->head->extra_max) {
                         zmemcpy(state->head->extra + len, next,
                                 len + copy > state->head->extra_max ?
                                 state->head->extra_max - len : copy);
@@ -785,7 +808,7 @@ int flush;
                     if (state->head != Z_NULL &&
                             state->head->name != Z_NULL &&
                             state->length < state->head->name_max)
-                        state->head->name[state->length++] = (Bytef)len;
+                        state->head->name[state->length++] = len;
                 } while (len && copy < have);
                 if ((state->flags & 0x0200) && (state->wrap & 4))
                     state->check = crc32(state->check, next, copy);
@@ -806,7 +829,7 @@ int flush;
                     if (state->head != Z_NULL &&
                             state->head->comment != Z_NULL &&
                             state->length < state->head->comm_max)
-                        state->head->comment[state->length++] = (Bytef)len;
+                        state->head->comment[state->length++] = len;
                 } while (len && copy < have);
                 if ((state->flags & 0x0200) && (state->wrap & 4))
                     state->check = crc32(state->check, next, copy);
@@ -1046,7 +1069,11 @@ int flush;
             if (have >= INFLATE_FAST_MIN_INPUT &&
                 left >= INFLATE_FAST_MIN_OUTPUT) {
                 RESTORE();
+#if defined(INFLATE_CHUNK_SIMD_NEON) || defined(INFLATE_CHUNK_SIMD_SSE2)
+                inflate_fast_chunk_(strm, out);
+#else
                 inflate_fast(strm, out);
+#endif
                 LOAD();
                 if (state->mode == TYPE)
                     state->back = -1;
@@ -1177,6 +1204,18 @@ int flush;
                 else
                     from = state->window + (state->wnext - copy);
                 if (copy > state->length) copy = state->length;
+#if defined(INFLATE_CHUNK_SIMD_NEON) || defined(INFLATE_CHUNK_SIMD_SSE2)
+                if (copy > left) copy = left;
+                put = chunkcopy_safe(put, from, copy, put + left);
+            }
+            else {                              /* copy from output */
+                copy = state->length;
+                if (copy > left) copy = left;
+                put = chunkcopy_lapped_safe(put, state->offset, copy, put + left);
+            }
+            left -= copy;
+            state->length -= copy;
+#else
             }
             else {                              /* copy from output */
                 from = put - state->offset;
@@ -1188,6 +1227,7 @@ int flush;
             do {
                 *put++ = *from++;
             } while (--copy);
+#endif
             if (state->length == 0) state->mode = LEN;
             break;
         case LIT:
@@ -1253,6 +1293,29 @@ int flush;
        Note: a memory error from inflate() is non-recoverable.
      */
   inf_leave:
+#if defined(DEBUG) && (defined(INFLATE_CHUNK_SIMD_NEON) || defined(INFLATE_CHUNK_SIMD_SSE2))
+    /* XXX(cavalcantii): I put this in place back in 2017 to help debug faulty
+    * client code relying on undefined behavior when chunk_copy first landed.
+    *
+    * It is save to say after all these years that Chromium code is well
+    * behaved and works fine with the optimization, therefore we can enable
+    * this only for DEBUG builds.
+    *
+    * We write a defined value in the unused space to help mark
+    * where the stream has ended. We don't use zeros as that can
+    * mislead clients relying on undefined behavior (i.e. assuming
+    * that the data is over when the buffer has a zero/null value).
+    *
+    * The basic idea is that if client code is not relying on the zlib context
+    * to inform the amount of decompressed data, but instead reads the output
+    * buffer until a zero/null is found, it will fail faster and harder
+    * when the remaining of the buffer is marked with a symbol (e.g. 0x55).
+    */
+    if (left >= CHUNKCOPY_CHUNK_SIZE)
+       memset(put, 0x55, CHUNKCOPY_CHUNK_SIZE);
+    else
+       memset(put, 0x55, left);
+#endif
     RESTORE();
     if (state->wsize || (out != strm->avail_out && state->mode < BAD &&
             (state->mode < CHECK || flush != Z_FINISH)))
@@ -1268,7 +1331,7 @@ int flush;
     if ((state->wrap & 4) && out)
         strm->adler = state->check =
             UPDATE(state->check, strm->next_out - out, out);
-    strm->data_type = (int)state->bits + (state->last ? 64 : 0) +
+    strm->data_type = state->bits + (state->last ? 64 : 0) +
                       (state->mode == TYPE ? 128 : 0) +
                       (state->mode == LEN_ || state->mode == COPY_ ? 256 : 0);
     if (((in == 0 && out == 0) || flush == Z_FINISH) && ret == Z_OK)
@@ -1515,11 +1578,10 @@ int subvert;
 
     if (inflateStateCheck(strm)) return Z_STREAM_ERROR;
     state = (struct inflate_state FAR *)strm->state;
-#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
     state->sane = !subvert;
+#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
     return Z_OK;
 #else
-    (void)subvert;
     state->sane = 1;
     return Z_DATA_ERROR;
 #endif
@@ -1545,19 +1607,9 @@ z_streamp strm;
 {
     struct inflate_state FAR *state;
 
-    if (inflateStateCheck(strm))
-        return -(1L << 16);
+    if (inflateStateCheck(strm)) return ULONG_MAX << 16;
     state = (struct inflate_state FAR *)strm->state;
-    return (long)(((unsigned long)((long)state->back)) << 16) +
+    return ((long)(state->back) << 16) +
         (state->mode == COPY ? state->length :
             (state->mode == MATCH ? state->was - state->length : 0));
-}
-
-unsigned long ZEXPORT inflateCodesUsed(strm)
-z_streamp strm;
-{
-    struct inflate_state FAR *state;
-    if (inflateStateCheck(strm)) return (unsigned long)-1;
-    state = (struct inflate_state FAR *)strm->state;
-    return (unsigned long)(state->next - state->codes);
 }

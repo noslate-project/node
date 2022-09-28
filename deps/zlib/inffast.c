@@ -1,5 +1,5 @@
 /* inffast.c -- fast decoding
- * Copyright (C) 1995-2017 Mark Adler
+ * Copyright (C) 1995-2008, 2010, 2013 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -8,9 +8,26 @@
 #include "inflate.h"
 #include "inffast.h"
 
-#ifdef ASMINF
-#  pragma message("Assembler code may have bugs -- use at your own risk")
+#ifndef ASMINF
+
+/* Allow machine dependent optimization for post-increment or pre-increment.
+   Based on testing to date,
+   Pre-increment preferred for:
+   - PowerPC G3 (Adler)
+   - MIPS R5000 (Randers-Pehrson)
+   Post-increment preferred for:
+   - none
+   No measurable difference:
+   - Pentium III (Anderson)
+   - M68060 (Nikl)
+ */
+#ifdef POSTINC
+#  define OFF 0
+#  define PUP(a) *(a)++
 #else
+#  define OFF 1
+#  define PUP(a) *++(a)
+#endif
 
 /*
    Decode literal, length, and distance codes and write out the resulting
@@ -18,13 +35,13 @@
    available, an end-of-block is encountered, or a data error is encountered.
    When large enough input and output buffers are supplied to inflate(), for
    example, a 16K input buffer and a 64K output buffer, more than 95% of the
-   inflate() execution time is spent in this routine.
+   inflate execution time is spent in this routine.
 
    Entry assumptions:
 
         state->mode == LEN
-        strm->avail_in >= INFLATE_FAST_MIN_INPUT (6 bytes)
-        strm->avail_out >= INFLATE_FAST_MIN_OUTPUT (258 bytes)
+        strm->avail_in >= INFLATE_FAST_MIN_INPUT
+        strm->avail_out >= INFLATE_FAST_MIN_OUTPUT
         start >= strm->avail_out
         state->bits < 8
 
@@ -36,20 +53,16 @@
 
    Notes:
 
-    INFLATE_FAST_MIN_INPUT: 6 bytes
-
     - The maximum input bits used by a length/distance pair is 15 bits for the
       length code, 5 bits for the length extra, 15 bits for the distance code,
       and 13 bits for the distance extra.  This totals 48 bits, or six bytes.
       Therefore if strm->avail_in >= 6, then there is enough input to avoid
       checking for available input while decoding.
 
-    INFLATE_FAST_MIN_OUTPUT: 258 bytes
-
     - The maximum bytes that a single length/distance pair can output is 258
       bytes, which is the maximum length that can be coded.  inflate_fast()
       requires strm->avail_out >= 258 for each loop to avoid checking for
-      available output space while decoding.
+      output space.
  */
 void ZLIB_INTERNAL inflate_fast(strm, start)
 z_streamp strm;
@@ -83,9 +96,9 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
 
     /* copy state to local variables */
     state = (struct inflate_state FAR *)strm->state;
-    in = strm->next_in;
+    in = strm->next_in - OFF;
     last = in + (strm->avail_in - (INFLATE_FAST_MIN_INPUT - 1));
-    out = strm->next_out;
+    out = strm->next_out - OFF;
     beg = out - (start - strm->avail_out);
     end = out + (strm->avail_out - (INFLATE_FAST_MIN_OUTPUT - 1));
 #ifdef INFLATE_STRICT
@@ -106,9 +119,9 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
        input data or output space */
     do {
         if (bits < 15) {
-            hold += (unsigned long)(*in++) << bits;
+            hold += (unsigned long)(PUP(in)) << bits;
             bits += 8;
-            hold += (unsigned long)(*in++) << bits;
+            hold += (unsigned long)(PUP(in)) << bits;
             bits += 8;
         }
         here = lcode[hold & lmask];
@@ -121,14 +134,14 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
             Tracevv((stderr, here.val >= 0x20 && here.val < 0x7f ?
                     "inflate:         literal '%c'\n" :
                     "inflate:         literal 0x%02x\n", here.val));
-            *out++ = (unsigned char)(here.val);
+            PUP(out) = (unsigned char)(here.val);
         }
         else if (op & 16) {                     /* length base */
             len = (unsigned)(here.val);
             op &= 15;                           /* number of extra bits */
             if (op) {
                 if (bits < op) {
-                    hold += (unsigned long)(*in++) << bits;
+                    hold += (unsigned long)(PUP(in)) << bits;
                     bits += 8;
                 }
                 len += (unsigned)hold & ((1U << op) - 1);
@@ -137,9 +150,9 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
             }
             Tracevv((stderr, "inflate:         length %u\n", len));
             if (bits < 15) {
-                hold += (unsigned long)(*in++) << bits;
+                hold += (unsigned long)(PUP(in)) << bits;
                 bits += 8;
-                hold += (unsigned long)(*in++) << bits;
+                hold += (unsigned long)(PUP(in)) << bits;
                 bits += 8;
             }
             here = dcode[hold & dmask];
@@ -152,10 +165,10 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                 dist = (unsigned)(here.val);
                 op &= 15;                       /* number of extra bits */
                 if (bits < op) {
-                    hold += (unsigned long)(*in++) << bits;
+                    hold += (unsigned long)(PUP(in)) << bits;
                     bits += 8;
                     if (bits < op) {
-                        hold += (unsigned long)(*in++) << bits;
+                        hold += (unsigned long)(PUP(in)) << bits;
                         bits += 8;
                     }
                 }
@@ -183,30 +196,30 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
 #ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
                         if (len <= op - whave) {
                             do {
-                                *out++ = 0;
+                                PUP(out) = 0;
                             } while (--len);
                             continue;
                         }
                         len -= op - whave;
                         do {
-                            *out++ = 0;
+                            PUP(out) = 0;
                         } while (--op > whave);
                         if (op == 0) {
                             from = out - dist;
                             do {
-                                *out++ = *from++;
+                                PUP(out) = PUP(from);
                             } while (--len);
                             continue;
                         }
 #endif
                     }
-                    from = window;
+                    from = window - OFF;
                     if (wnext == 0) {           /* very common case */
                         from += wsize - op;
                         if (op < len) {         /* some from window */
                             len -= op;
                             do {
-                                *out++ = *from++;
+                                PUP(out) = PUP(from);
                             } while (--op);
                             from = out - dist;  /* rest from output */
                         }
@@ -217,14 +230,14 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                         if (op < len) {         /* some from end of window */
                             len -= op;
                             do {
-                                *out++ = *from++;
+                                PUP(out) = PUP(from);
                             } while (--op);
-                            from = window;
+                            from = window - OFF;
                             if (wnext < len) {  /* some from start of window */
                                 op = wnext;
                                 len -= op;
                                 do {
-                                    *out++ = *from++;
+                                    PUP(out) = PUP(from);
                                 } while (--op);
                                 from = out - dist;      /* rest from output */
                             }
@@ -235,35 +248,35 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                         if (op < len) {         /* some from window */
                             len -= op;
                             do {
-                                *out++ = *from++;
+                                PUP(out) = PUP(from);
                             } while (--op);
                             from = out - dist;  /* rest from output */
                         }
                     }
                     while (len > 2) {
-                        *out++ = *from++;
-                        *out++ = *from++;
-                        *out++ = *from++;
+                        PUP(out) = PUP(from);
+                        PUP(out) = PUP(from);
+                        PUP(out) = PUP(from);
                         len -= 3;
                     }
                     if (len) {
-                        *out++ = *from++;
+                        PUP(out) = PUP(from);
                         if (len > 1)
-                            *out++ = *from++;
+                            PUP(out) = PUP(from);
                     }
                 }
                 else {
                     from = out - dist;          /* copy direct from output */
                     do {                        /* minimum length is three */
-                        *out++ = *from++;
-                        *out++ = *from++;
-                        *out++ = *from++;
+                        PUP(out) = PUP(from);
+                        PUP(out) = PUP(from);
+                        PUP(out) = PUP(from);
                         len -= 3;
                     } while (len > 2);
                     if (len) {
-                        *out++ = *from++;
+                        PUP(out) = PUP(from);
                         if (len > 1)
-                            *out++ = *from++;
+                            PUP(out) = PUP(from);
                     }
                 }
             }
@@ -300,8 +313,8 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
     hold &= (1U << bits) - 1;
 
     /* update state and return */
-    strm->next_in = in;
-    strm->next_out = out;
+    strm->next_in = in + OFF;
+    strm->next_out = out + OFF;
     strm->avail_in = (unsigned)(in < last ?
         (INFLATE_FAST_MIN_INPUT - 1) + (last - in) :
         (INFLATE_FAST_MIN_INPUT - 1) - (in - last));

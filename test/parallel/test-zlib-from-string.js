@@ -35,15 +35,9 @@ const inputString = 'ΩΩLorem ipsum dolor sit amet, consectetur adipiscing eli'
                     ' diam ipsum. Suspendisse nec ullamcorper odio. Vestibulu' +
                     'm arcu mi, sodales non suscipit id, ultrices ut massa. S' +
                     'ed ac sem sit amet arcu malesuada fermentum. Nunc sed. ';
-const expectedBase64Deflate = 'eJxdUUtOQzEMvMoc4OndgT0gJCT2buJWlpI4jePeqZfpmX' +
-                              'AKLRKbLOzx/HK73q6vOrhCunlF1qIDJhNUeW5I2ozT5OkD' +
-                              'lKWLJWkncJG5403HQXAkT3Jw29B9uIEmToMukglZ0vS6oc' +
-                              'iBh4JG8sV4oVLEUCitK2kxq1WzPnChHDzsaGKy491LofoA' +
-                              'bWh8do43oeuYhB5EPCjcLjzYJo48KrfQBvnJecNFJvHT1+' +
-                              'RSQsGoC7dn2t/xjhduTA1NWyQIZR0pbHwMDatnD+crPqKS' +
-                              'qGPHp1vnlsWM/07ubf7bheF7kqSj84Bm0R1fYTfaK8vqqq' +
-                              'fKBtNMhe3OZh6N95CTvMX5HJJi4xOVzCgUOIMSLH7wmeOH' +
-                              'aFE4RdpnGavKtrB5xzfO/Ll9';
+
+// defate result changed with zlib-cloudflare
+const expectedBase64Deflate = 'eJxdkN1pA0EMhFuZAo7rIe9JCBjyLu/KRrC7WuvHPbkZ1xTuEtuQV2lmmPnut/vtXY07ZHp2VG1qcAlQ51hQdDiX4EgDVZniRcYZ3CRWfKgdBSfKIsf0BTMtHRQ4G12lEqqUyL6gyZFNQVZyS7xSa+JoVDaXDBTtXas+dJ0jHZwY4rLiM1uj/hAtGHxJxuCCqRaE2aiwUSy7HuyBE1vnEdlBeU5ecJUgfvYKbi0dTlN4PNf+nVe88WAaGDpQhTrUiqz4MpWBS4rv8xFpU3zFIX3yqOLOL8tO89+PC/YlRW2yQavoim/2kGO2reqGp8sC10qNfU/z9CJTAlIXZAuTwo4MdHKnFQeuoALn/trxG7RFJFV6wdhQjk1bV/wAzvy5fQ==';
 const expectedBase64Gzip = 'H4sIAAAAAAAAA11RS05DMQy8yhzg6d2BPSAkJPZu4laWkjiN4' +
                            '96pl+mZcAotEpss7PH8crverq86uEK6eUXWogMmE1R5bkjajN' +
                            'Pk6QOUpYslaSdwkbnjTcdBcCRPcnDb0H24gSZOgy6SCVnS9Lq' +

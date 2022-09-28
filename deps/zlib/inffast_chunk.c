@@ -1,4 +1,26 @@
 /* inffast_chunk.c -- fast decoding
+ *
+ * (C) 1995-2013 Jean-loup Gailly and Mark Adler
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ * Jean-loup Gailly        Mark Adler
+ * jloup@gzip.org          madler@alumni.caltech.edu
+ *
  * Copyright (C) 1995-2017 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
@@ -6,8 +28,8 @@
 #include "zutil.h"
 #include "inftrees.h"
 #include "inflate.h"
-#include "contrib/optimizations/inffast_chunk.h"
-#include "contrib/optimizations/chunkcopy.h"
+#include "inffast_chunk.h"
+#include "chunkcopy.h"
 
 #ifdef ASMINF
 #  pragma message("Assembler code may have bugs -- use at your own risk")
@@ -28,7 +50,6 @@
         strm->avail_out >= INFLATE_FAST_MIN_OUTPUT (258 bytes)
         start >= strm->avail_out
         state->bits < 8
-        (state->hold >> state->bits) == 0
         strm->next_out[0..strm->avail_out] does not overlap with
               strm->next_in[0..strm->avail_in]
         strm->state->window is allocated with an additional
@@ -65,7 +86,6 @@
           (state->hold >> state->bits) == 0
 
     INFLATE_FAST_MIN_OUTPUT: 258 bytes
-
     - The maximum bytes that a single length/distance pair can output is 258
       bytes, which is the maximum length that can be coded.  inflate_fast()
       requires strm->avail_out >= 258 for each loop to avoid checking for
@@ -276,7 +296,7 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                            the main copy is near the end.
                           */
                         out = chunkunroll_relaxed(out, &dist, &len);
-                        out = chunkcopy_safe(out, out - dist, len, limit);
+                        out = chunkcopy_safe_ugly(out, dist, len, limit);
                     } else {
                         /* from points to window, so there is no risk of
                            overlapping pointers requiring memset-like behaviour
