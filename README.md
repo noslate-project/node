@@ -1,10 +1,5 @@
-# A-Node
+# Anode - Noslate Node.js 发行版
 
-A-Node 是一个 Node.js 的分支版本，是 AIWWR Cloud 中一个用于执行任务的 Runtime。
+![image](https://user-images.githubusercontent.com/629202/192716397-c5c756ed-4949-441b-a874-75e8e1c4052b.png)
 
-较社区版本主要增加了用户代码加载加速和观测性探针两个主要功能。
-
-目前的发行过的版本包括：
-
-1. v16.15.1
-2. v14.19.3
+面向弹性场景进行优化，提高了用户代码的加载速度提高冷启动效率，主要包括 Require 关系加速、Bytecode Cache。同时包含来自阿里云基础软件团队的 ARM 架构的性能优化特性。
