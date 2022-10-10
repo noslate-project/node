@@ -859,8 +859,8 @@ license text.
 [Working Groups]: https://github.com/nodejs/TSC/blob/HEAD/WORKING_GROUPS.md
 
 
-## AIWWR-Node
+## Noslate-Node
 
-AIWWR-Node is developed by Alibaba and based on the Node.js project.
+Noslate-Node is developed by Alibaba and based on the Node.js project.
 All changes licensed under the MIT License.
 See the NOTICE file for more information.
