@@ -44,6 +44,18 @@ const expectedBase64Deflate = 'eJxdUUtOQzEMvMoc4OndgT0gJCT2buJWlpI4jePeqZfpmX' +
                               'qGPHp1vnlsWM/07ubf7bheF7kqSj84Bm0R1fYTfaK8vqqq' +
                               'fKBtNMhe3OZh6N95CTvMX5HJJi4xOVzCgUOIMSLH7wmeOH' +
                               'aFE4RdpnGavKtrB5xzfO/Ll9';
+// cloudflare/zlib optimize the deflate function
+// and produce different (slightly smaller) outputs,
+// see cloudflare/zlib#2 for detail.
+const expectedClBase64Deflate = 'eJxdkN1pA0EMhFuZAo7rIe9JCBjyLu/KRrC7WuvHPbkZ' +
+                                '1xTuEtuQV2lmmPnut/vtXY07ZHp2VG1qcAlQ51hQdDiX' +
+                                '4EgDVZniRcYZ3CRWfKgdBSfKIsf0BTMtHRQ4G12lEqqU' +
+                                'yL6gyZFNQVZyS7xSa+JoVDaXDBTtXas+dJ0jHZwY4rLi' +
+                                'M1uj/hAtGHxJxuCCqRaE2aiwUSy7HuyBE1vnEdlBeU5e' +
+                                'cJUgfvYKbi0dTlN4PNf+nVe88WAaGDpQhTrUiqz4MpWB' +
+                                'S4rv8xFpU3zFIX3yqOLOL8tO89+PC/YlRW2yQavoim/2' +
+                                'kGO2reqGp8sC10qNfU/z9CJTAlIXZAuTwo4MdHKnFQeu' +
+                                'oALn/trxG7RFJFV6wdhQjk1bV/wAzvy5fQ==';
 const expectedBase64Gzip = 'H4sIAAAAAAAAA11RS05DMQy8yhzg6d2BPSAkJPZu4laWkjiN4' +
                            '96pl+mZcAotEpss7PH8crverq86uEK6eUXWogMmE1R5bkjajN' +
                            'Pk6QOUpYslaSdwkbnjTcdBcCRPcnDb0H24gSZOgy6SCVnS9Lq' +
@@ -55,7 +67,11 @@ const expectedBase64Gzip = 'H4sIAAAAAAAAA11RS05DMQy8yhzg6d2BPSAkJPZu4laWkjiN4' +
                            'sHnHNzRtagj5AQAA';
 
 zlib.deflate(inputString, common.mustCall((err, buffer) => {
-  assert.strictEqual(buffer.toString('base64'), expectedBase64Deflate);
+  try {
+    assert.strictEqual(buffer.toString('base64'), expectedClBase64Deflate);
+  } catch {
+    assert.strictEqual(buffer.toString('base64'), expectedBase64Deflate);
+  }
 }));
 
 zlib.gzip(inputString, common.mustCall((err, buffer) => {
