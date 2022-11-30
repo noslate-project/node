@@ -2067,7 +2067,7 @@ DEFINE_BOOL(predictable_gc_schedule, false,
             "Predictable garbage collection schedule. Fixes heap growing, "
             "idle, and memory reducing behavior.")
 DEFINE_VALUE_IMPLICATION(predictable_gc_schedule, min_semi_space_size, 4)
-DEFINE_VALUE_IMPLICATION(predictable_gc_schedule, max_semi_space_size, 4)
+DEFINE_VALUE_IMPLICATION(predictable_gc_schedule, max_semi_space_size, 128)
 DEFINE_VALUE_IMPLICATION(predictable_gc_schedule, heap_growing_percent, 30)
 DEFINE_NEG_IMPLICATION(predictable_gc_schedule, memory_reducer)
 
