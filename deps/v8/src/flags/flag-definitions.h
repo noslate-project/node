@@ -889,7 +889,7 @@ DEFINE_BOOL(wasm_generic_wrapper, true,
             "allow use of the generic js-to-wasm wrapper instead of "
             "per-signature wrappers")
 DEFINE_BOOL(expose_wasm, true, "expose wasm interface to JavaScript")
-DEFINE_INT(wasm_num_compilation_tasks, 128,
+DEFINE_INT(wasm_num_compilation_tasks, 64,
            "maximum number of parallel compilation tasks for wasm")
 DEFINE_VALUE_IMPLICATION(single_threaded, wasm_num_compilation_tasks, 0)
 DEFINE_DEBUG_BOOL(trace_wasm_native_heap, false,
