@@ -1,8 +1,9 @@
 'use strict';
-
-/* eslint-disable max-len */
-
 require('../common');
+
+if (require('os').platform() !== 'linux') {
+  return;
+}
 
 const assert = require('assert');
 const cp = require('child_process');
@@ -65,7 +66,11 @@ if (process.argv[2] === 'writer') {
 }
 
 let ret = cp.spawnSync(process.execPath, [ __filename, 'writer' ]);
-assert.strictEqual(ret.status, 0, ret.stderr.toString());
+assert.strictEqual(ret.status, 0, formatStdout(ret.stdout, ret.stderr));
 
 ret = cp.spawnSync(process.execPath, [ __filename, 'reader' ]);
-assert.strictEqual(ret.status, 0, ret.stderr.toString());
+assert.strictEqual(ret.status, 0, formatStdout(ret.stdout, ret.stderr));
+
+function formatStdout(stdout, stderr) {
+  return '\n### stdout:\n' + stdout.toString() + '\n\n\n### stderr:\n' + stderr.toString() + '\n===\n\n';
+}

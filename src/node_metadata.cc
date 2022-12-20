@@ -66,6 +66,7 @@ void Metadata::Versions::InitializeIntlVersions() {
 
 Metadata::Versions::Versions() {
   node = NODE_VERSION_STRING;
+  anode = ANODE_VERSION_STRING;
   v8 = v8::V8::GetVersion();
   uv = uv_version_string();
   zlib = ZLIB_VERSION;
