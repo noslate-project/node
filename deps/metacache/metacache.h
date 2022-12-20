@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include <new>
 #include <string>
@@ -38,8 +39,8 @@ namespace strontium {
 namespace metacache {
 
 // likely and unlikey
-#define LIKELY(x) (__builtin_expect(!!(x), 1))
-#define UNLIKELY(x) (__builtin_expect(!!(x), 0))
+#define MY_LIKELY(x) (__builtin_expect(!!(x), 1))
+#define MY_UNLIKELY(x) (__builtin_expect(!!(x), 0))
 
 // default vm address the cache loading to.
 // it could be a dynamic virtual address, depends on plantform.
@@ -53,11 +54,11 @@ namespace metacache {
 
 // page aligned
 // const int kPageSize = sysconf(_SC_PAGE_SIZE);
-#define PAGE_SIZE               (4096)
+#define MC_PAGE_SIZE               (4096)
 #define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
-//#define ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
-#define ALIGN(x,a)              __ALIGN_MASK(x,((a)-1))
-#define ALIGN_PAGE(x)           ALIGN(x,PAGE_SIZE) 
+//#define MC_ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
+#define MC_ALIGN(x,a)              __ALIGN_MASK(x,((a)-1))
+#define MC_ALIGN_PAGE(x)           MC_ALIGN(x,MC_PAGE_SIZE)
 
 // metacache uses offset for memory saving.
 // the whole metacache using 32b pointer in 64b platform.
@@ -415,7 +416,7 @@ public:
         std::swap(z, x);
         s += 64;
         len -= 128;
-      } while (LIKELY(len >= 128));
+      } while (MY_LIKELY(len >= 128));
       x += Rotate(v.first + z, 49) * k0;
       z += Rotate(w.first, 37) * k0;
       // If 0 < len < 128, hash up to 4 chunks of 32 bytes each from the end of s.
@@ -595,7 +596,7 @@ struct cm {
         std::ofstream f(file, std::ios::binary);
         void *ptr = _vmcur;
         size_t size = (uint64_t)ptr - MC_DEF_VMADDR;
-        f.write((char *)MC_DEF_VMADDR, ALIGN_PAGE(size));
+        f.write((char *)MC_DEF_VMADDR, MC_ALIGN_PAGE(size));
         f.close();
         printf("%s(%s) = %lu\n", __func__, file, size);
         return 0;
@@ -2482,7 +2483,7 @@ struct fs_w : _wT {
     void debug_print()
     {
         // show records table
-        printf("Records table: %u\n", _records.size());
+        printf("Records table: %lu\n", _records.size());
         printf("%4s %4s %s\n", "STAT", "OPEN", "FILE_PATH");
         auto it = _records.begin();
         for (; it != _records.end(); it++) {
@@ -2547,7 +2548,7 @@ struct metacache_w : _wT {
     {
         str_w w(s);
         auto it = _set_str.insert(w);
-        printf(" wc::str('%s'), hash(%lx), cmptr(%p)\n", w._sz.c_str(), w._hash, w._cm_ptr);
+        printf(" wc::str('%s'), hash(%" PRIx64 "), cmptr(%p)\n", w._sz.c_str(), w._hash, w._cm_ptr);
         return *it.first;
     }
 
@@ -2577,3 +2578,6 @@ struct metacache_w : _wT {
 }; // namespace strontium
 
 #endif // _STRONTIUM_METACACHE_H_
+
+#undef MY_LIKELY
+#undef MY_UNLIKELY

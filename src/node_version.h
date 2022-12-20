@@ -26,6 +26,8 @@
 #define NODE_MINOR_VERSION 17
 #define NODE_PATCH_VERSION 1
 
+#define ANODE_REVISE 1
+
 #define NODE_VERSION_IS_LTS 1
 #define NODE_VERSION_LTS_CODENAME "Gallium"
 
@@ -58,11 +60,16 @@
                               NODE_STRINGIFY(NODE_MINOR_VERSION) "." \
                               NODE_STRINGIFY(NODE_PATCH_VERSION)     \
                               NODE_TAG
+
+# define ANODE_VERSION_STRING NODE_VERSION_STRING "-anode." \
+                              NODE_STRINGIFY(ANODE_REVISE)
+
 #ifndef NODE_EXE_VERSION
 # define NODE_EXE_VERSION NODE_VERSION_STRING
 #endif
 
 #define NODE_VERSION "v" NODE_VERSION_STRING
+#define ANODE_VERSION "v" ANODE_VERSION_STRING
 
 
 #define NODE_VERSION_AT_LEAST(major, minor, patch) \

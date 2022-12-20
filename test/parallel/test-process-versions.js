@@ -13,6 +13,7 @@ const expected_keys = [
   'nghttp2',
   'napi',
   'llhttp',
+  'anode',
 ];
 
 if (common.hasCrypto) {

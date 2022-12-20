@@ -769,6 +769,9 @@ PerProcessOptionsParser::PerProcessOptionsParser(
   AddOption(
       "--version", "print Node.js version", &PerProcessOptions::print_version);
   AddAlias("-v", "--version");
+  AddOption(
+      "--anode-version", "print Anode version",
+            &PerProcessOptions::print_anode_version);
   AddOption("--v8-options",
             "print V8 command line options",
             &PerProcessOptions::print_v8_help);
