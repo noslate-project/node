@@ -48,6 +48,7 @@ namespace node {
   V(acorn)                                                                     \
   V(simdutf)                                                                   \
   V(ada)                                                                       \
+  V(anode)                                                                     \
   NODE_VERSIONS_KEY_UNDICI(V)
 
 #if HAVE_OPENSSL

@@ -83,7 +83,7 @@ int metacache::savefile(const char *file)
     std::ofstream f(file, std::ios::binary);
     void *ptr = vmem_cur;
     size_t size = (uint64_t)ptr - MC_VMEM;
-    f.write((char *)MC_VMEM, ALIGN_PAGE(size));
+    f.write((char *)MC_VMEM, MC_ALIGN_PAGE(size));
     f.close();
     printf("%s(%s) = %lu\n", __func__, file, size);
     return 0; 

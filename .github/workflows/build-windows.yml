@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   build-windows:
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && false
     strategy:
       matrix:
         windows: [windows-2019, windows-2022]
