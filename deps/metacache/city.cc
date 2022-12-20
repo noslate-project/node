@@ -73,12 +73,10 @@ static uint32 UNALIGNED_LOAD32(const char *p) {
 
 #endif  // __BIG_ENDIAN__
 
-#if !defined(LIKELY)
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define LIKELY(x) (__builtin_expect(!!(x), 1))
+#define MY_LIKELY(x) (__builtin_expect(!!(x), 1))
 #else
-#define LIKELY(x) (x)
-#endif
+#define MY_LIKELY(x) (x)
 #endif
 
 static uint64 Fetch64(const char *p) {
@@ -313,7 +311,7 @@ uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed) {
     std::swap(z, x);
     s += 64;
     len -= 128;
-  } while (LIKELY(len >= 128));
+  } while (MY_LIKELY(len >= 128));
   x += Rotate(v.first + z, 49) * k0;
   z += Rotate(w.first, 37) * k0;
   // If 0 < len < 128, hash up to 4 chunks of 32 bytes each from the end of s.
@@ -432,7 +430,7 @@ static void CityHashCrc256Short(const char *s, size_t len, uint64 *result) {
 }
 
 void CityHashCrc256(const char *s, size_t len, uint64 *result) {
-  if (LIKELY(len >= 240)) {
+  if (MY_LIKELY(len >= 240)) {
     CityHashCrc256Long(s, len, 0, result);
   } else {
     CityHashCrc256Short(s, len, result);
@@ -463,3 +461,5 @@ uint128 CityHashCrc128(const char *s, size_t len) {
 }
 
 #endif
+
+undef MY_LIKELY

@@ -950,6 +950,13 @@ std::unique_ptr<InitializationResult> InitializeOncePerProcess(
       return result;
     }
 
+    if (per_process::cli_options->print_anode_version) {
+      printf("%s\n", ANODE_VERSION);
+      result->exit_code_ = 0;
+      result->early_return_ = true;
+      return result;
+    }
+
     if (per_process::cli_options->print_bash_completion) {
       std::string completion = options_parser::GetBashCompletion();
       printf("%s\n", completion.c_str());
