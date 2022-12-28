@@ -79,7 +79,7 @@ RequireCacheWrap::RequireCacheWrap(Environment* env,
       mc_(metacache::load(cache_filename)),
       error_info_(""),
       cache_filename_(cache_filename),
-      type_(READER),
+//      type_(READER),
       contents_(),
       relationship_(),
       internal_meta_kv_() {
@@ -125,8 +125,8 @@ RequireCacheWrap::RequireCacheWrap(Environment* env,
                                    Local<Array> entries)
     : BaseObject(env, obj),
       mc_(metacache::create(METACACHE_MAX_SIZE)),
-      cache_filename_(""),
-      type_(WRITER) {
+//      type_(WRITER),
+      cache_filename_("") {
   MakeWeak();
 
   if (mc_ == nullptr) {
@@ -317,12 +317,12 @@ string RequireCacheWrap::TransformFilenameBack(const char* filename,
     return *ret;
   }
 
-  size_t index = -1;
+  ssize_t index = -1;
   node::MaybeStackBuffer<char, PATH_MAX_BYTES> temp;
-  sscanf(num, "%lu", &index);
+  sscanf(num, "%ld", &index);
   snprintf(*temp, PATH_MAX_BYTES - 1, ".%s", filename + pos);
 
-  if (index < 0 || index >= entries_count_) {
+  if (index < 0 || index >= (ssize_t) entries_count_) {
     env->ThrowError("Broken entry index.");
     return "";
   }

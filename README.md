@@ -786,6 +786,12 @@ external libraries that are available under a variety of licenses.  See
 [LICENSE](https://github.com/nodejs/node/blob/HEAD/LICENSE) for the full
 license text.
 
+## Noslate-Anode
+
+Noslate-Anode is developed by Alibaba and based on the Node.js project.
+All changes licensed under the MIT License.
+See the NOTICE file for more information.
+
 [Code of Conduct]: https://github.com/nodejs/admin/blob/HEAD/CODE_OF_CONDUCT.md
 [Contributing to the project]: CONTRIBUTING.md
 [Node.js website]: https://nodejs.org/
@@ -793,10 +799,3 @@ license text.
 [Strategic initiatives]: doc/contributing/strategic-initiatives.md
 [Technical values and prioritization]: doc/contributing/technical-values.md
 [Working Groups]: https://github.com/nodejs/TSC/blob/HEAD/WORKING_GROUPS.md
-
-
-## Noslate-Node
-
-Noslate-Node is developed by Alibaba and based on the Node.js project.
-All changes licensed under the MIT License.
-See the NOTICE file for more information.

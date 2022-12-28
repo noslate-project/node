@@ -54,7 +54,8 @@ class MetaCacheTypeUnion {
   ~MetaCacheTypeUnion() {
     if (body_.ptr != nullptr) {
       // TODO(zl131478): 需要完整的析构
-      delete body_.ptr;
+      // TODO(guangwong): 不知道该转成哪个类型来析构，先转个基础类型逃避下检查
+      delete (int*) body_.ptr;
       body_.ptr = nullptr;
     }
   }
@@ -147,7 +148,7 @@ class RequireCacheWrap : public BaseObject {
   string error_info_;
   string cache_filename_;
 
-  WrapType type_;
+//  WrapType type_;
   MetaCacheTypeUnion<MetaCacheFileBufferR, MetaCacheFileBufferW> contents_;
   MetaCacheTypeUnion<MetaCacheRelationR, MetaCacheRelationW> relationship_;
   MetaCacheTypeUnion<MetaCacheMetaKVR, MetaCacheMetaKVW> internal_meta_kv_;
