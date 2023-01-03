@@ -46,23 +46,25 @@ RequireCacheWrap::~RequireCacheWrap() {
 void RequireCacheWrap::Initialize(Environment* env, Local<Object> target) {
   HandleScope scope(env->isolate());
 
-  Local<FunctionTemplate> t = env->NewFunctionTemplate(New);
+  Isolate* isolate = env->isolate();
+
+  Local<FunctionTemplate> t = node::NewFunctionTemplate(isolate, New);
 
   t->InstanceTemplate()->SetInternalFieldCount(
       RequireCacheWrap::kInternalFieldCount);
 
-  env->SetProtoMethod(t, "isLoaded", IsLoaded);
+  node::SetProtoMethod(isolate, t, "isLoaded", IsLoaded);
 
-  env->SetProtoMethod(t, "addRelation", AddRelation);
-  env->SetProtoMethod(t, "addCode", AddCode);
-  env->SetProtoMethod(t, "dump", Dump);
+  node::SetProtoMethod(isolate, t, "addRelation", AddRelation);
+  node::SetProtoMethod(isolate, t, "addCode", AddCode);
+  node::SetProtoMethod(isolate, t, "dump", Dump);
 
-  env->SetProtoMethod(t, "queryCode", QueryCode);
-  env->SetProtoMethod(t, "queryRelation", QueryRelation);
-  env->SetProtoMethod(t, "getInternalMeta", GetInternalMeta);
+  node::SetProtoMethod(isolate, t, "queryCode", QueryCode);
+  node::SetProtoMethod(isolate, t, "queryRelation", QueryRelation);
+  node::SetProtoMethod(isolate, t, "getInternalMeta", GetInternalMeta);
 
-  env->SetProtoMethod(t, "transformFilename", TransformFilename);
-  env->SetProtoMethod(t, "transformFilenameBack", TransformFilenameBack);
+  node::SetProtoMethod(isolate, t, "transformFilename", TransformFilename);
+  node::SetProtoMethod(isolate, t, "transformFilenameBack", TransformFilenameBack);
 
   target
       ->Set(env->context(),
