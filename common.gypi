@@ -376,6 +376,7 @@
         'defines': [
           'V8_COMPRESS_POINTERS',
           'V8_COMPRESS_POINTERS_IN_ISOLATE_CAGE',
+          'V8_SHORT_BUILTIN_CALLS'
         ],
       }],
       ['v8_enable_pointer_compression == 1 or v8_enable_31bit_smis_on_64bit_arch == 1', {
