@@ -17,6 +17,9 @@
 #include "inspector/worker_inspector.h"  // ParentInspectorHandle
 #endif
 
+#include <sched.h>
+#include <unistd.h>
+
 namespace node {
 
 using v8::Context;
@@ -44,7 +47,6 @@ NodeMainInstance::NodeMainInstance(Isolate* isolate,
 }
 
 std::unique_ptr<NodeMainInstance> NodeMainInstance::Create(
-    Isolate* isolate,
     uv_loop_t* event_loop,
     MultiIsolatePlatform* platform,
     const std::vector<std::string>& args,
@@ -131,6 +133,14 @@ int NodeMainInstance::Run() {
 }
 
 void NodeMainInstance::Run(int* exit_code, Environment* env) {
+  // Set cpu affinity in main thread
+  cpu_set_t mask;
+  int c = sched_getcpu();
+  if (c >= 0) {
+    CPU_ZERO(&mask);
+    CPU_SET(c, &mask);
+    sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+  }
   if (*exit_code == 0) {
     LoadEnvironment(env, StartExecutionCallback{});
 
