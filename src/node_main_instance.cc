@@ -17,6 +17,9 @@
 #include "inspector/worker_inspector.h"  // ParentInspectorHandle
 #endif
 
+#include <sched.h>
+#include <unistd.h>
+
 namespace node {
 
 using v8::Context;
@@ -131,6 +134,15 @@ int NodeMainInstance::Run() {
 }
 
 void NodeMainInstance::Run(int* exit_code, Environment* env) {
+  //Daoming: set cpu affinity in main thread
+  cpu_set_t mask;
+  int c = sched_getcpu();
+  if (c >= 0) {
+    CPU_ZERO(&mask);
+    CPU_SET(c, &mask);
+    //Try best to call sched_setaffinity, and don't care about its result.
+    sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+  }
   if (*exit_code == 0) {
     LoadEnvironment(env, StartExecutionCallback{});
 
